@@ -1,0 +1,69 @@
+Here’s an R script that repeatedly generates a summary table based on motions, summaries, voting results, and councillors’ decisions. This script assumes that the data is provided in a structured data frame, and it will loop over the motions, creating a table for each.
+Steps:
+
+    Define the data in a data frame.
+    Write a function that generates the summary for each motion.
+    Loop through each motion and output the summary table.
+
+r
+
+# Step 1: Define the data frame with motions and councillors' decisions
+motions_df <- data.frame(
+  Motion = c("Approval of Minutes", "Approval of Order of Business", "By-law M-301 Amendment",
+             "Appointment of Building Officials", "Cogswell District Project Update", 
+             "Amendments to Administrative Order 29", "Canada Public Transit Fund Application", 
+             "Cogswell District Land Use Policies", "Active Transportation Infrastructure"),
+  
+  Summary = c("Approval of minutes from August 20, 2024 Committee of the Whole and Regional Council",
+              "Amending the order of business for the day’s agenda",
+              "Adoption of By-law M-301, Amending By-law M-300 on Micromobility",
+              "Appointment of Dane Ordway, KC Mangali, and Will Irvine as Building Officials",
+              "Approve increase to Cogswell Interchange Redevelopment budget",
+              "Adoption of proposed amendments to Administrative Order 29 on HRM Civic Addressing",
+              "Submit an Expression of Interest for the Canada Public Transit Fund",
+              "Consider requests of New Roots Halifax North End Community Land Trust in the Cogswell District Land Use Policies planning process",
+              "Proceed with planning and stakeholder engagement for multimodal upgrades to Trunk 7"),
+  
+  VotingResults = c("Passed unanimously", "Passed unanimously", "14 in favour, 2 against",
+                    "Passed unanimously", "Passed unanimously", "Passed unanimously", 
+                    "Passed unanimously", "Passed unanimously", "Passed unanimously"),
+  
+  InFavour = c("All present councillors", "All present councillors", 
+               "Mayor Savage, Deputy Mayor Deagle Gammon, Councillors Hendsbee, Purdy, Austin, Mancini, Mason, Smith, Cleary, Stoddard, Lovelace, Blackburn, Russell, Outhit",
+               "All present councillors", "All present councillors", "All present councillors", 
+               "All present councillors", "All present councillors", "All present councillors"),
+  
+  Against = c("None", "None", "Councillors Morse, Cuttell", "None", "None", "None", 
+              "None", "None", "None"),
+  
+  stringsAsFactors = FALSE
+)
+
+# Step 2: Define a function to generate a summary for each motion
+generate_summary <- function(motion, summary, voting_results, in_favour, against) {
+  cat("Motion:", motion, "\n")
+  cat("Summary of the Motion:", summary, "\n")
+  cat("Voting Results:", voting_results, "\n")
+  cat("Councillors in Favour:", in_favour, "\n")
+  cat("Councillors Against:", against, "\n")
+  cat("------------------------------------------------------\n")
+}
+
+# Step 3: Loop through each motion and generate the summary
+for (i in 1:nrow(motions_df)) {
+  generate_summary(
+    motion = motions_df$Motion[i],
+    summary = motions_df$Summary[i],
+    voting_results = motions_df$VotingResults[i],
+    in_favour = motions_df$InFavour[i],
+    against = motions_df$Against[i]
+  )
+}
+
+Explanation:
+
+    motions_df: The data frame that stores all the information about each motion, including the motion name, summary, voting results, councillors in favour, and councillors against.
+    generate_summary: A function that prints the summary of each motion.
+    For loop: Iterates through each row of the motions_df and prints the motion details using the generate_summary function.
+
+This script will generate a summary for each motion in sequence. You can modify the data or the function to adjust the output format as needed..
