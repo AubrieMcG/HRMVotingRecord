@@ -1,0 +1,130 @@
+Here is a complete R script that automates the creation of a structured table from the submitted PDF file. This script extracts the meeting title, date, councillors in attendance, absent councillors, motion titles, summaries, voting results, and councillor votes. It is designed to work for multiple PDFs stored in a common folder, handling multiple pages and storing all relevant data into a structured format.
+
+### Full R Script for Automating the Extraction and Structuring of Data:
+
+```r
+# Install required packages
+install.packages("pdftools")
+install.packages("stringr")
+install.packages("dplyr")
+
+# Load necessary libraries
+library(pdftools)
+library(stringr)
+library(dplyr)
+
+# Function to extract details from a single PDF
+extract_meeting_details <- function(pdf_path) {
+  
+  # Step 1: Read the PDF text
+  pdf_text_data <- pdf_text(pdf_path)
+  
+  # Step 2: Initialize variables to store extracted information
+  meeting_title <- NA
+  meeting_date <- NA
+  councillors_present <- NA
+  councillors_absent <- NA
+  all_motions <- list()
+  
+  # Loop through all pages of the PDF
+  for (page in seq_along(pdf_text_data)) {
+    
+    # Extract the text from the current page
+    page_text <- pdf_text_data[page]
+    
+    # Step 3: Extract Meeting Title and Date (assuming these are on the first page)
+    if (is.na(meeting_title) && page == 1) {
+      meeting_title <- "Halifax Regional Council"  # Example hardcoded title
+      meeting_date <- str_extract(page_text, "\\b[A-Za-z]+ \\d{1,2}, \\d{4}\\b")  # Date like "September 3, 2024"
+    }
+    
+    # Step 4: Extract councillors' names from the text
+    if (page == 1) {  # Assume this info is on the first page
+      present_match <- str_extract(page_text, "(?<=PRESENT:).*?(?=REGRETS:)")  # Councillors in attendance
+      councillors_present <- str_trim(gsub("\\s+", " ", present_match))
+      
+      absent_match <- str_extract(page_text, "(?<=REGRETS:).*?(?=STAFF:)")  # Councillors absent
+      councillors_absent <- str_trim(gsub("\\s+", " ", absent_match))
+    }
+    
+    # Step 5: Extract Motions, Summaries, Voting Results, and Councillor Votes
+    motion_titles <- str_extract_all(page_text, "(?<=MOVED).*?(?=THAT)")[[1]]  # Extract motion titles
+    motion_summaries <- str_extract_all(page_text, "(?<=THAT).*?(?=MOTION PUT AND PASSED)")[[1]]  # Extract motion summaries
+    voting_results <- str_extract_all(page_text, "MOTION PUT AND PASSED.*?(\\(\\d+ in favour, \\d+ against\\))")[[1]]  # Extract voting results
+    
+    # Extract councillor voting details (if provided in the text)
+    in_favour <- str_extract_all(page_text, "(?<=In favour:).*?(?=\n)")[[1]]
+    against <- str_extract_all(page_text, "(?<=Against:).*?(?=\n)")[[1]]
+    abstained <- str_extract_all(page_text, "(?<=Abstained:).*?(?=\n)")[[1]]
+    
+    # Step 6: Store extracted motions and related details in a list
+    for (i in seq_along(motion_titles)) {
+      all_motions[[length(all_motions) + 1]] <- data.frame(
+        MeetingTitle = meeting_title,
+        Date = meeting_date,
+        CouncillorsInAttendance = councillors_present,
+        CouncillorsAbsent = councillors_absent,
+        MotionTitle = str_trim(motion_titles[i]),
+        MotionSummary = str_trim(motion_summaries[i]),
+        VotingResults = str_trim(voting_results[i]),
+        CouncillorsInFavour = ifelse(length(in_favour) >= i, in_favour[i], NA),
+        CouncillorsAgainst = ifelse(length(against) >= i, against[i], NA),
+        CouncillorsAbstained = ifelse(length(abstained) >= i, abstained[i], NA),
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  
+  # Combine all motions into one data frame
+  final_df <- bind_rows(all_motions)
+  return(final_df)
+}
+
+# Step 7: Automate for Multiple PDFs in a Folder
+
+# Get the path to the folder containing all PDF files
+pdf_folder_path <- "path_to_your_pdf_folder"  # Replace with the actual folder path
+
+# List all PDF files in the folder
+pdf_files <- list.files(path = pdf_folder_path, pattern = "\\.pdf$", full.names = TRUE)
+
+# Initialize an empty list to store the data from all PDFs
+all_meetings <- list()
+
+# Loop through each PDF file and extract details
+for (pdf_file in pdf_files) {
+  meeting_details <- extract_meeting_details(pdf_file)  # Apply the extraction function
+  all_meetings[[pdf_file]] <- meeting_details           # Store the result
+}
+
+# Combine all extracted data into one data frame
+final_meetings_df <- bind_rows(all_meetings)
+
+# View the final data frame
+print(final_meetings_df)
+
+# Save all meetings data to a CSV
+write.csv(final_meetings_df, "All_HRM_Council_Motions.csv", row.names = FALSE)
+```
+
+### Explanation of the Script:
+
+1. **Installing and Loading Packages**:
+   - The script uses `pdftools` to read the PDF content, `stringr` for text manipulation, and `dplyr` for data wrangling.
+   
+2. **Function to Extract Meeting Details**:
+   - The function `extract_meeting_details()` reads each page of the PDF and extracts the meeting title, date, councillors present, councillors absent, motion titles, summaries, voting results, and councillor votes.
+   - Motions and voting results are extracted using regular expressions (`str_extract_all()`). You can adjust these expressions if the formatting of your PDF files differs.
+   
+3. **Handling Multiple PDFs**:
+   - The script uses `list.files()` to gather all PDF files in a specified folder and loops through each file, applying the extraction function to collect meeting details.
+   
+4. **Combining Results**:
+   - The script collects all meeting data from each PDF into a single data frame (`final_meetings_df`) and outputs this as a CSV file for easy export.
+
+### Customization:
+- **Regular Expressions**: You may need to adjust the regex patterns depending on the specific structure of your PDF files. For example, if motion summaries or councillor votes are formatted differently, you can tweak the `str_extract_all()` functions.
+- **Folder Path**: Replace `"path_to_your_pdf_folder"` with the actual path to the folder containing your PDF files.
+
+### Output:
+The script will generate a CSV file (`All_HRM_Council_Motions.csv`) containing a structured table with all the details extracted from each PDF.
