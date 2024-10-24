@@ -1,0 +1,90 @@
+EXTRACTING INFORMATION FROM A PDF USING R
+To extract the required information from a PDF document using R, you can use the `pdftools` package to extract text and then use regular expressions (`regex`) or string processing functions to retrieve specific information. Below is a basic R script that extracts motions, summaries, voting results, and councillor votes from a PDF.
+
+### Script:
+
+```r
+# Install and load required libraries
+if (!require(pdftools)) install.packages("pdftools")
+if (!require(stringr)) install.packages("stringr")
+
+library(pdftools)
+library(stringr)
+
+# Load the PDF file
+pdf_file <- "path_to_your_pdf_file/240903rc-draftmins.pdf"
+
+# Extract the text from the PDF
+pdf_text <- pdf_text(pdf_file)
+
+# Combine the text from all pages into a single string
+all_text <- paste(pdf_text, collapse = "\n")
+
+# Define function to extract motions and related information
+extract_motions <- function(text) {
+  # Use regex to extract motions (based on common keywords or structure of the minutes)
+  motion_pattern <- "MOVED by (Councillor [A-Za-z ]+), seconded by (Councillor [A-Za-z ]+)\n(.*?)\nMOTION PUT AND PASSED.*"
+  motions <- str_match_all(text, motion_pattern)
+  
+  # Extract and store the relevant components: motion, summary, voting results
+  motions_data <- lapply(motions[[1]], function(m) {
+    motion <- m[3]
+    summary <- str_extract(motion, "(?<=THAT ).*?(?=\\.)")  # Extract summary of the motion
+    voting_results <- str_extract(motion, "MOTION (PUT AND PASSED|PUT AND FAILED|PUT AND DEFERRED)")
+    
+    councillors_in_favor <- str_extract(motion, "(?<=In favour: ).*?(?=\n)")
+    councillors_against <- str_extract(motion, "(?<=Against: ).*?(?=\n)")
+    
+    # Return the extracted data in a list format
+    list(
+      motion = motion,
+      summary = summary,
+      voting_results = voting_results,
+      in_favor = councillors_in_favor,
+      against = councillors_against
+    )
+  })
+  
+  return(motions_data)
+}
+
+# Extract motions data
+motions_data <- extract_motions(all_text)
+
+# Convert the motions data into a dataframe for easier analysis
+motions_df <- data.frame(
+  Motion = sapply(motions_data, function(x) x$motion),
+  Summary = sapply(motions_data, function(x) x$summary),
+  VotingResults = sapply(motions_data, function(x) x$voting_results),
+  InFavor = sapply(motions_data, function(x) x$in_favor),
+  Against = sapply(motions_data, function(x) x$against),
+  stringsAsFactors = FALSE
+)
+
+# Print the dataframe
+print(motions_df)
+
+# Save the extracted data to a CSV file (optional)
+write.csv(motions_df, "extracted_motions.csv", row.names = FALSE)
+```
+
+### Explanation:
+1. **Packages**:
+   - `pdftools`: To read and extract text from the PDF.
+   - `stringr`: For string manipulation and regular expressions.
+   
+2. **Extract PDF Text**: 
+   - The `pdf_text` function from `pdftools` extracts the entire text from the PDF.
+   - The text from all pages is combined into a single string.
+
+3. **Regex-Based Extraction**:
+   - Motions, voting results, and councillor names are extracted using `str_match_all` and `str_extract` from the `stringr` package. 
+   - The regex patterns search for motions using keywords like "MOVED by" and extract sections like councillors' votes from predefined phrases like "In favour:" and "Against:".
+
+4. **Result**:
+   - The extracted data is stored in a dataframe (`motions_df`) and printed.
+   - Optionally, the results can be saved to a CSV file for later use.
+
+### Notes:
+- You will need to adjust the paths to your specific file.
+- The regex patterns might need fine-tuning based on the exact structure of the PDF text.
