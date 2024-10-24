@@ -1,0 +1,121 @@
+Here is a step-by-step guide for running the R script in RStudio for someone new to the software:
+1. Install R and RStudio
+
+Before running the script, you need to install both R and RStudio.
+
+    Install R:
+        Go to CRAN R Project website.
+        Download and install the latest version of R for your operating system (Windows, macOS, or Linux).
+
+    Install RStudio:
+        Go to the RStudio website.
+        Download and install the free version of RStudio Desktop.
+
+2. Open RStudio
+
+Once both R and RStudio are installed, follow these steps:
+
+    Launch RStudio by clicking on its icon.
+        You will see four main sections in RStudio:
+            Source Editor (top-left): where you write and run scripts.
+            Console (bottom-left): where R commands are executed and output is shown.
+            Environment/History (top-right): displays variables and objects created in your R session.
+            Files/Plots/Packages/Help (bottom-right): various panels for managing files, viewing plots, loading packages, and accessing help documentation.
+
+3. Create a New Script
+
+Now, let's create a new script file for your R code:
+
+    Go to the top-left corner of RStudio and click on File > New File > R Script.
+        This will open a blank script in the Source Editor section.
+
+4. Paste the R Script
+
+Copy the script from the previous step (shown below) and paste it into the newly opened R script file.
+
+r
+
+# Step 1: Define the data frame with motions and councillors' decisions
+motions_df <- data.frame(
+  Motion = c("Approval of Minutes", "Approval of Order of Business", "By-law M-301 Amendment",
+             "Appointment of Building Officials", "Cogswell District Project Update", 
+             "Amendments to Administrative Order 29", "Canada Public Transit Fund Application", 
+             "Cogswell District Land Use Policies", "Active Transportation Infrastructure"),
+  
+  Summary = c("Approval of minutes from August 20, 2024 Committee of the Whole and Regional Council",
+              "Amending the order of business for the day’s agenda",
+              "Adoption of By-law M-301, Amending By-law M-300 on Micromobility",
+              "Appointment of Dane Ordway, KC Mangali, and Will Irvine as Building Officials",
+              "Approve increase to Cogswell Interchange Redevelopment budget",
+              "Adoption of proposed amendments to Administrative Order 29 on HRM Civic Addressing",
+              "Submit an Expression of Interest for the Canada Public Transit Fund",
+              "Consider requests of New Roots Halifax North End Community Land Trust in the Cogswell District Land Use Policies planning process",
+              "Proceed with planning and stakeholder engagement for multimodal upgrades to Trunk 7"),
+  
+  VotingResults = c("Passed unanimously", "Passed unanimously", "14 in favour, 2 against",
+                    "Passed unanimously", "Passed unanimously", "Passed unanimously", 
+                    "Passed unanimously", "Passed unanimously", "Passed unanimously"),
+  
+  InFavour = c("All present councillors", "All present councillors", 
+               "Mayor Savage, Deputy Mayor Deagle Gammon, Councillors Hendsbee, Purdy, Austin, Mancini, Mason, Smith, Cleary, Stoddard, Lovelace, Blackburn, Russell, Outhit",
+               "All present councillors", "All present councillors", "All present councillors", 
+               "All present councillors", "All present councillors", "All present councillors"),
+  
+  Against = c("None", "None", "Councillors Morse, Cuttell", "None", "None", "None", 
+              "None", "None", "None"),
+  
+  stringsAsFactors = FALSE
+)
+
+# Step 2: Define a function to generate a summary for each motion
+generate_summary <- function(motion, summary, voting_results, in_favour, against) {
+  cat("Motion:", motion, "\n")
+  cat("Summary of the Motion:", summary, "\n")
+  cat("Voting Results:", voting_results, "\n")
+  cat("Councillors in Favour:", in_favour, "\n")
+  cat("Councillors Against:", against, "\n")
+  cat("------------------------------------------------------\n")
+}
+
+# Step 3: Loop through each motion and generate the summary
+for (i in 1:nrow(motions_df)) {
+  generate_summary(
+    motion = motions_df$Motion[i],
+    summary = motions_df$Summary[i],
+    voting_results = motions_df$VotingResults[i],
+    in_favour = motions_df$InFavour[i],
+    against = motions_df$Against[i]
+  )
+}
+
+5. Save the Script
+
+    Save the script by clicking on File > Save or pressing Ctrl + S (Windows) or Cmd + S (Mac).
+    Give your file a name, like motions_summary.R, and save it in your desired folder.
+
+6. Run the Script
+
+To run the script:
+
+    Select all code in the script (you can click anywhere in the script and press Ctrl + A or Cmd + A to select everything).
+    Click the "Run" button at the top-right of the Source Editor.
+        Alternatively, you can press Ctrl + Enter or Cmd + Enter after selecting the code.
+
+7. View the Output
+
+    Once the script runs, the output will appear in the Console window (bottom-left). You will see the summaries of each motion printed there.
+
+8. Modify and Re-run the Script
+
+If you want to modify the script (e.g., change the motion summaries or councillors' decisions), you can do so directly in the Source Editor. After making changes:
+
+    Save the script again (Ctrl + S or Cmd + S).
+    Run the script again to see the updated output.
+
+Additional Tips:
+
+    Comments in R: Any line that starts with # is a comment and will not be executed. Use this for notes or explanations.
+    Console: If you want to try simple commands, you can also type directly in the Console (but code typed there won’t be saved).
+    Help and Documentation: If you need help on specific functions, type ?function_name (e.g., ?data.frame) in the Console for documentation.
+
+By following these instructions, you'll be able to run the R script in RStudio to generate the motion summaries! Let me know if you need further clarification.
