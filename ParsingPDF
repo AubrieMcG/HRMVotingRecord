@@ -1,0 +1,182 @@
+Parsing text from a PDF using R involves reading the text with the `pdftools` package and then processing that text to extract the relevant information, such as motions, summaries, voting results, and the names of councillors who voted for or against the motions. Here’s a **detailed walkthrough** on how to do this.
+
+### Step 1: Install and Load Required Packages
+
+Before starting, make sure you have the `pdftools` and `stringr` packages installed. The `pdftools` package will help us extract text from the PDF, and `stringr` is useful for text manipulation with regular expressions.
+
+```r
+# Install the packages if you haven't already
+install.packages("pdftools")
+install.packages("stringr")
+
+# Load the libraries
+library(pdftools)
+library(stringr)
+```
+
+### Step 2: Read the PDF
+
+Use `pdftools` to extract the text from the PDF file.
+
+```r
+# Read the text from the PDF
+pdf_text_data <- pdf_text("path_to_your_pdf_file.pdf")
+
+# Print the text from the first page for exploration
+cat(pdf_text_data[1])
+```
+
+### Step 3: Inspect and Understand the Raw Text
+
+Before you start parsing, look at the raw text to understand how it's structured. You’ll likely see paragraphs of text, headings, and possibly repetitive patterns. Look for key phrases or patterns that can help you identify the sections of interest, such as:
+- **"MOTION PUT AND PASSED"** for the end of a motion.
+- **"Councillor"** for names of councillors.
+- **Summaries** that typically come right after a motion title.
+
+### Step 4: Extracting Relevant Sections
+
+#### Example: Extracting Motions and Summaries
+
+We can use regular expressions (`regex`) to identify the start and end of each motion. For example, motions may be identified by patterns such as the word "MOVED" and summaries might follow after.
+
+```r
+# Extract text for each page
+page_text <- pdf_text_data[1]  # Extracting from the first page
+
+# Split the page by newline characters into individual lines
+lines <- unlist(strsplit(page_text, "\n"))
+
+# Extract lines that contain the word "MOVED" (where motions start)
+motion_lines <- grep("MOVED", lines, value = TRUE)
+
+# Display the extracted lines containing motions
+motion_lines
+```
+
+#### Example: Extracting Voting Results
+
+Voting results might be accompanied by phrases like **"PUT AND PASSED"** or **"in favour"**. You can use regular expressions to find those lines.
+
+```r
+# Extract lines that contain the voting results (PUT AND PASSED)
+voting_lines <- grep("PUT AND PASSED", lines, value = TRUE)
+
+# Display the extracted voting result lines
+voting_lines
+```
+
+### Step 5: Clean the Extracted Data
+
+After extracting the raw text, you will often need to clean it by removing unnecessary characters, extra whitespace, or irrelevant sections. The `gsub()` and `str_trim()` functions are useful for this.
+
+```r
+# Example of cleaning up the text
+cleaned_motion_lines <- str_trim(gsub("\\s+", " ", motion_lines))  # Remove extra whitespace
+cleaned_voting_lines <- str_trim(gsub("\\s+", " ", voting_lines))  # Clean the voting lines
+
+# View cleaned data
+cleaned_motion_lines
+cleaned_voting_lines
+```
+
+### Step 6: Structure the Extracted Data
+
+Now that you have the key sections (motions, voting results, etc.), you can structure the data into a data frame for further analysis.
+
+```r
+# Create a data frame to store motions and their voting results
+motion_df <- data.frame(
+  Motion = cleaned_motion_lines,        # Motions
+  VotingResults = cleaned_voting_lines, # Voting results
+  stringsAsFactors = FALSE
+)
+
+# View the structured data
+print(motion_df)
+```
+
+### Step 7: Parse Specific Details (Optional)
+
+If you need to extract specific names of councillors who voted "for" and "against," you can search for specific patterns or keywords.
+
+#### Extract Names of Councillors
+
+If the councillors' names are listed under phrases like **"Councillors in favour"** or **"Councillors against"**, you can use regular expressions to isolate those sections.
+
+```r
+# Extract lines containing "in favour" or "against"
+in_favour_lines <- grep("in favour", lines, value = TRUE)
+against_lines <- grep("against", lines, value = TRUE)
+
+# Clean and parse councillor names (e.g., names might be separated by commas)
+in_favour_names <- unlist(strsplit(gsub(".*in favour: ", "", in_favour_lines), ","))
+against_names <- unlist(strsplit(gsub(".*against: ", "", against_lines), ","))
+
+# Trim white spaces
+in_favour_names <- str_trim(in_favour_names)
+against_names <- str_trim(against_names)
+
+# Print councillors who voted in favour and against
+print(in_favour_names)
+print(against_names)
+```
+
+### Step 8: Automating the Process
+
+If your PDF has multiple motions spread across different pages, you can loop through each page to extract and process all motions.
+
+```r
+# Initialize lists to store motions and voting results across all pages
+all_motions <- list()
+all_voting_results <- list()
+
+# Loop through each page in the PDF
+for (i in seq_along(pdf_text_data)) {
+  page_text <- pdf_text_data[i]
+  
+  # Split the page text into lines
+  lines <- unlist(strsplit(page_text, "\n"))
+  
+  # Extract motions and voting results
+  motion_lines <- grep("MOVED", lines, value = TRUE)
+  voting_lines <- grep("PUT AND PASSED", lines, value = TRUE)
+  
+  # Clean the extracted lines
+  cleaned_motion_lines <- str_trim(gsub("\\s+", " ", motion_lines))
+  cleaned_voting_lines <- str_trim(gsub("\\s+", " ", voting_lines))
+  
+  # Store in lists
+  all_motions[[i]] <- cleaned_motion_lines
+  all_voting_results[[i]] <- cleaned_voting_lines
+}
+
+# Convert the lists to data frames
+motion_df <- data.frame(
+  Motion = unlist(all_motions),
+  VotingResults = unlist(all_voting_results),
+  stringsAsFactors = FALSE
+)
+
+# View the final structured data
+print(motion_df)
+```
+
+### Step 9: Saving the Data
+
+You can save the extracted and structured data into a CSV file for further analysis.
+
+```r
+# Save the structured data to a CSV file
+write.csv(motion_df, "motions_voting_results.csv", row.names = FALSE)
+```
+
+### Summary of Steps:
+1. **Read the PDF**: Use `pdf_text()` to extract text from the PDF.
+2. **Inspect the Raw Text**: Understand the structure and patterns in the text.
+3. **Extract Relevant Sections**: Use `grep()` or other string manipulation functions to isolate the parts of the text you need (motions, summaries, voting results).
+4. **Clean the Data**: Use functions like `gsub()` and `str_trim()` to clean and process the extracted text.
+5. **Structure the Data**: Organize the cleaned text into a structured format like a data frame.
+6. **Automate and Process**: Loop through multiple pages and automate the extraction and structuring of data.
+7. **Save the Data**: Export the processed data to a file (e.g., CSV).
+
+Let me know if you'd like to dive deeper into any specific part of the process or need help with a particular step!
